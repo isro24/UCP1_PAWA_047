@@ -1,0 +1,118 @@
+<div class="container mt-5">
+    <h1 class="text-center">List User</h1>
+
+    <!-- Form to Add New User -->
+    <form id="adduserForm" class="my-4">
+        <div class="input-group mb-3">
+            <input type="text" id="newName" class="form-control" placeholder="Nama" required>
+        </div>
+        <div class="input-group mb-3">
+            <input type="text" id="newPhone" class="form-control" placeholder="Nomor Telepon" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add User</button>
+    </form>
+
+    <!-- List of users -->
+    <ul id="userList" class="list-group">
+        <% users.forEach(user => { %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><%= user.nama %> - <%= user.noTelepon %></span>
+                <div>
+                    <button class="btn btn-sm btn-success mr-2 editBtn" data-id="<%= user.id %>">Edit</button>
+                    <button class="btn btn-sm btn-danger deleteBtn" data-id="<%= user.id %>">Delete</button>
+                </div>
+            </li>
+        <% }); %>
+    </ul>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edituserForm">
+                        <div class="form-group">
+                            <label for="editName">Nama</label>
+                            <input type="text" id="editName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhone">Nomor Telepon</label>
+                            <input type="text" id="editPhone" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Add new user
+        $('#adduserForm').on('submit', function (e) {
+            e.preventDefault();
+            const name = $('#newName').val().trim();
+            const phone = $('#newPhone').val().trim();
+            if (name && phone) {
+                $.ajax({
+                    url: '/users',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ nama: name, noTelepon: phone }),
+                    success: function (newUser) {
+                        location.reload(); // Reload to show the new user
+                    },
+                    error: function (error) {
+                        console.error("Error adding user:", error.responseText);
+                    }
+                });
+            }
+        });
+
+        // Delete a user
+        $('.deleteBtn').on('click', function () {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/users/' + id,
+                type: 'DELETE',
+                success: function () {
+                    location.reload(); // Reload to show updated list
+                }
+            });
+        });
+
+        // Show edit modal with the current user data
+        let editId;
+        $('.editBtn').on('click', function () {
+            editId = $(this).data('id');
+            const currentUser = $(this).closest('li').find('span').text().split(" - ");
+            $('#editName').val(currentUser[0]);
+            $('#editPhone').val(currentUser[1]);
+            $('#editModal').modal('show');
+        });
+
+        // Update user on form submission
+        $('#edituserForm').on('submit', function (e) {
+            e.preventDefault();
+            const name = $('#editName').val().trim();
+            const phone = $('#editPhone').val().trim();
+            if (name && phone) {
+                $.ajax({
+                    url: '/users/' + editId,
+                    type: 'PUT',
+                    data: JSON.stringify({ nama: name, noTelepon: phone }),
+                    contentType: 'application/json',
+                    success: function () {
+                        location.reload(); // Reload to show the updated user
+                    }
+                });
+            }
+        });
+    });
+</script>
